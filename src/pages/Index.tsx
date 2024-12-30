@@ -44,12 +44,13 @@ const Index = () => {
           {blogs?.map((blog) => (
             <BlogCard
               key={blog.id}
+              id={blog.id}
               title={blog.title}
               author={blog.author}
               content={blog.content}
-              likes={blog.likes_count}
-              dislikes={blog.dislikes_count}
-              date={new Date(blog.created_at).toLocaleDateString()}
+              likes_count={blog.likes_count}
+              dislikes_count={blog.dislikes_count}
+              created_at={blog.created_at}
             />
           ))}
         </div>
