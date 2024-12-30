@@ -58,6 +58,62 @@ db.exec(`
   );
 `);
 
+// Add demo data
+const initializeDemoData = async () => {
+  try {
+    // Create demo user
+    const hashedPassword = await bcrypt.hash('demo123', 10);
+    const createDemoUser = db.prepare('INSERT OR IGNORE INTO users (username, email, password) VALUES (?, ?, ?)');
+    const demoUserResult = createDemoUser.run('demouser', 'demo@example.com', hashedPassword);
+
+    // Get demo user id
+    const getDemoUser = db.prepare('SELECT id FROM users WHERE email = ?');
+    const demoUser = getDemoUser.get('demo@example.com');
+
+    // Create sample blogs
+    const createBlog = db.prepare('INSERT OR IGNORE INTO blogs (title, content, author_id) VALUES (?, ?, ?)');
+    
+    const sampleBlogs = [
+      {
+        title: 'Getting Started with React',
+        content: 'React is a powerful library for building user interfaces. In this blog post, we\'ll explore the basics of React components, state management, and hooks. Whether you\'re a beginner or an experienced developer, React offers a robust ecosystem for creating modern web applications.',
+      },
+      {
+        title: 'The Art of Writing Clean Code',
+        content: 'Clean code is not just about making your code work - it\'s about making it work elegantly. This post discusses best practices for writing maintainable, readable, and efficient code. We\'ll cover topics like naming conventions, code organization, and common pitfalls to avoid.',
+      },
+      {
+        title: 'Understanding Modern JavaScript',
+        content: 'JavaScript has evolved significantly over the years. From ES6 features to modern async patterns, this post covers everything you need to know about writing contemporary JavaScript code. Learn about arrow functions, destructuring, promises, and more.',
+      }
+    ];
+
+    sampleBlogs.forEach(blog => {
+      createBlog.run(blog.title, blog.content, demoUser.id);
+    });
+
+    // Add some likes and reports for interaction
+    const addLike = db.prepare('INSERT OR IGNORE INTO likes (user_id, blog_id, action) VALUES (?, ?, ?)');
+    const updateBlogLikes = db.prepare('UPDATE blogs SET likes_count = likes_count + 1 WHERE id = ?');
+    
+    // Get first blog id
+    const getFirstBlog = db.prepare('SELECT id FROM blogs LIMIT 1');
+    const firstBlog = getFirstBlog.get();
+    
+    if (firstBlog) {
+      addLike.run(demoUser.id, firstBlog.id, 'like');
+      updateBlogLikes.run(firstBlog.id);
+    }
+
+    console.log('Demo data initialized successfully');
+  } catch (error) {
+    console.error('Error initializing demo data:', error);
+  }
+};
+
+// Initialize demo data when server starts
+initializeDemoData();
+
 // Authentication middleware
 const authenticateToken = (req, res, next) => {
   const authHeader = req.headers['authorization'];
